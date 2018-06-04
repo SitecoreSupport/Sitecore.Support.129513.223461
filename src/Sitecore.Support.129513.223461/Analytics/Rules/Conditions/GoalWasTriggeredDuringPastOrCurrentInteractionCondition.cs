@@ -49,13 +49,33 @@ namespace Sitecore.Support.Analytics.Rules.Conditions
     {
       Assert.ArgumentNotNull(ruleContext, "ruleContext");
       Assert.IsNotNull(Tracker.Current, "Tracker.Current is not initialized");
-      Assert.IsNotNull(Tracker.Current.Session, "Tracker.Current.Session is not initialized");
-      Assert.IsNotNull(Tracker.Current.Session.Interaction, "Tracker.Current.Session.Interaction is not initialized");
+      #region Modified code
+      // Remove validation of current session/interaction, because the rule should work even if there is no current interation
+      //Assert.IsNotNull(Tracker.Current.Session, "Tracker.Current.Session is not initialized");
+      //Assert.IsNotNull(Tracker.Current.Session.Interaction, "Tracker.Current.Session.Interaction is not initialized");
+      #endregion
       if (!GoalGuid.HasValue)
         return false;
-      if (HasEventOccurredInInteraction(Tracker.Current.Session.Interaction))
-        return true;
+
+      #region Modified code
+      //add a check for null
+      if (Tracker.Current.Session != null && Tracker.Current.Session.Interaction != null)
+      {
+        if (HasEventOccurredInInteraction(Tracker.Current.Session.Interaction))
+          return true;
+      }
+      #endregion
+
       Assert.IsNotNull(Tracker.Current.Contact, "Tracker.Current.Contact is not initialized");
+
+      #region Modified code
+      //load key behavior cache if it is not loaded, (e.g. when there is no current interaction)
+      if (!Tracker.Current.Contact.Attachments.ContainsKey("KeyBehaviorCache"))
+      {
+        Tracker.Current.Contact.LoadKeyBehaviorCache();
+      }
+      #endregion
+
       return FilterKeyBehaviorCacheEntries(Tracker.Current.Contact.GetKeyBehaviorCache()).Any(entry =>
       {
         var id = entry.Id;
