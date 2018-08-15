@@ -51,21 +51,27 @@ namespace Sitecore.Support.Analytics.Rules.Conditions
 
     protected virtual IEnumerable<KeyBehaviorCacheEntry> FilterKeyBehaviorCacheEntriesByInteractionConditions(IEnumerable<KeyBehaviorCacheEntry> keyBehaviorCacheEntries)
     {
-      Assert.ArgumentNotNull((object)keyBehaviorCacheEntries, nameof(keyBehaviorCacheEntries));
+      Assert.ArgumentNotNull(keyBehaviorCacheEntries, "keyBehaviorCacheEntries");
       if (Sitecore.Support.Rules.Conditions.ConditionsUtility.GetInt32Comparer(this.NumberOfElapsedDaysOperatorId) == null)
+      {
         return Enumerable.Empty<KeyBehaviorCacheEntry>();
+      }
       Func<int, int, bool> numberOfPastInteractionsComparer = Sitecore.Support.Rules.Conditions.ConditionsUtility.GetInt32Comparer(this.NumberOfPastInteractionsOperatorId);
       Func<int, int, bool> numberOfElapsedDaysOperatorsComparer = Sitecore.Support.Rules.Conditions.ConditionsUtility.GetInt32Comparer(this.NumberOfElapsedDaysOperatorId);
       if (numberOfPastInteractionsComparer == null)
+      {
         return Enumerable.Empty<KeyBehaviorCacheEntry>();
+      }
       return Assert.ResultNotNull<IEnumerable<KeyBehaviorCacheEntry>>(Enumerable.SelectMany(Enumerable.Where(Enumerable.OrderByDescending(Enumerable.GroupBy(keyBehaviorCacheEntries, (KeyBehaviorCacheEntry entry) => new
       {
-        InteractionId = entry.InteractionId,
-        InteractionStartDateTime = entry.InteractionStartDateTime
+        entry.InteractionId,
+        entry.InteractionStartDateTime
       }), entries => entries.Key.InteractionStartDateTime), (entries, i) =>
       {
         if (numberOfElapsedDaysOperatorsComparer((DateTime.UtcNow - entries.Key.InteractionStartDateTime).Days, this.NumberOfElapsedDays))
+        {
           return numberOfPastInteractionsComparer(i + 2, this.NumberOfPastInteractions);
+        }
         return false;
       }), entries => (IEnumerable<KeyBehaviorCacheEntry>)entries));
     }
